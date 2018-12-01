@@ -1,0 +1,19 @@
+{
+  "name": "extract-roads",
+  "version": "1.0.0",
+  "description": "",
+  "main": "parser.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "",
+  "license": "ISC",
+  "devDependencies": {
+    "JSONStream": "^1.3.5"
+  },
+  "dependencies": {
+    "csv-writer": "^1.2.0",
+    "event-stream": "^4.0.1",
+    "ngraph.graph": "0.0.14"
+  }
+}
