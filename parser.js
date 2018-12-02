@@ -3,7 +3,6 @@ let es = require('event-stream');
 let fs = require('fs');
 
 let nodes = new Map();
-let roads = new Map();
 let graph = require('ngraph.graph')();
 
 fs.createReadStream('map.json', {encoding: 'utf8'})
@@ -19,10 +18,6 @@ function callback(el) {
 function done() {
     addCoordinatesIntoGraph();
     saveResults();
-}
-
-function processOSMError() {
-    console.log('error');
 }
 
 function processOSMNode(node) {
@@ -45,13 +40,6 @@ function processOSMWay(way) {
             Math.abs(nodes.get(fromId).lat - nodes.get(toId).lat) +
             Math.abs(nodes.get(fromId).lon - nodes.get(toId).lon)
         ) * 10000000);
-
-        roads.set(fromId, {
-            'fromId' : fromId,
-            'toId' : toId,
-            'weight' : roadLength,
-        });
-
         graph.addLink(fromId, toId, roadLength);
     }
 }
@@ -64,33 +52,8 @@ function addCoordinatesIntoGraph() {
 
 function saveResults() {
     console.log('Graph loaded');
-    //saveRoadsAsCsv();
-    //saveAllForOutput();
-    //saveNodesAsCsv();
-}
-
-function saveAllForOutput() {
-    const createCsvWriter = require('csv-writer').createObjectCsvWriter;
-    const csvWriter = createCsvWriter({
-        path: 'allData.csv',
-        header: [
-            {id: 'fromId', title: 'fromId'},
-            {id: 'toId', title: 'toId'},
-            {id: 'weight', title: 'weight'},
-            {id: 'latFrom', title: 'latFrom'},
-            {id: 'lonFrom', title: 'lonFrom'},
-            {id: 'latTo', title: 'latTo'},
-            {id: 'lonTo', title: 'lonTo'},
-
-        ]
-    });
-    let temp = [{}];
-    graph.forEachLink(function (road) {
-        temp.push(roads.get(road.fromId));
-    });
-    csvWriter.writeRecords(temp).then(() => {
-        console.log('...roads are recorded');
-    });
+    saveRoadsAsCsv();
+    saveNodesAsCsv();
 }
 
 function saveRoadsAsCsv() {
@@ -103,7 +66,7 @@ function saveRoadsAsCsv() {
             {id: 'weight', title: 'weight'}
         ]
     });
-    let tempRoads = [{}];
+    let tempRoads = [];
     graph.forEachLink(function (road) {
         tempRoads.push({
             'fromId': road.fromId,
@@ -127,7 +90,7 @@ function saveNodesAsCsv() {
             {id: 'lon', title: 'lon'}
         ]
     });
-    let tempNodes = [{}];
+    let tempNodes = [];
     graph.forEachNode(function (node) {
         let temp = nodes.get(node.id);
         tempNodes.push({
