@@ -3,6 +3,7 @@ let es = require('event-stream');
 let fs = require('fs');
 
 let nodes = new Map();
+let roads = new Map();
 let graph = require('ngraph.graph')();
 
 fs.createReadStream('map.json', {encoding: 'utf8'})
@@ -16,7 +17,7 @@ function callback(el) {
 }
 
 function done() {
-    addCoordinatesOfNodes();
+    addCoordinatesIntoGraph();
     saveResults();
 }
 
@@ -44,11 +45,18 @@ function processOSMWay(way) {
             Math.abs(nodes.get(fromId).lat - nodes.get(toId).lat) +
             Math.abs(nodes.get(fromId).lon - nodes.get(toId).lon)
         ) * 10000000);
+
+        roads.set(fromId, {
+            'fromId' : fromId,
+            'toId' : toId,
+            'weight' : roadLength,
+        });
+
         graph.addLink(fromId, toId, roadLength);
     }
 }
 
-function addCoordinatesOfNodes() {
+function addCoordinatesIntoGraph() {
     graph.forEachNode(node => {
         node.data = nodes.get(node.id);
     })
@@ -56,38 +64,31 @@ function addCoordinatesOfNodes() {
 
 function saveResults() {
     console.log('Graph loaded');
-    // graph.forEachNode(function (node) {
-    //     console.log(node);
-    // });
-    saveRoadsAsCsv();
+    //saveRoadsAsCsv();
     //saveAllForOutput();
-    saveNodesAsCsv();
+    //saveNodesAsCsv();
 }
 
 function saveAllForOutput() {
     const createCsvWriter = require('csv-writer').createObjectCsvWriter;
     const csvWriter = createCsvWriter({
-        path: 'diagram.csv',
+        path: 'allData.csv',
         header: [
             {id: 'fromId', title: 'fromId'},
             {id: 'toId', title: 'toId'},
-            {id: 'lat', title: 'lat'},
-            {id: 'lon', title: 'lon'},
-            {id: 'weight', title: 'weight'}
+            {id: 'weight', title: 'weight'},
+            {id: 'latFrom', title: 'latFrom'},
+            {id: 'lonFrom', title: 'lonFrom'},
+            {id: 'latTo', title: 'latTo'},
+            {id: 'lonTo', title: 'lonTo'},
+
         ]
     });
-    let tempRoads = [{}];
-    graph.forEachNode(function (node) {
-        let temp
-        tempRoads.push({
-            'fromId': road.fromId,
-            'toId': road.toId,
-            'lat' : 0,
-            'lon' : 0,
-            'weight': road.data
-        });
+    let temp = [{}];
+    graph.forEachLink(function (road) {
+        temp.push(roads.get(road.fromId));
     });
-    csvWriter.writeRecords(tempRoads).then(() => {
+    csvWriter.writeRecords(temp).then(() => {
         console.log('...roads are recorded');
     });
 }
@@ -110,6 +111,7 @@ function saveRoadsAsCsv() {
             'weight': road.data
         });
     });
+
     csvWriter.writeRecords(tempRoads).then(() => {
         console.log('...roads are recorded');
     });
